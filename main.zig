@@ -10,13 +10,16 @@ pub fn main() !void {
     const json = try parce.rawToJSON(allocator, raw_data);
     const weather = json.value;
     const temperature_now = weather.current.temperature_2m;
+    const temperature_units = weather.current_units.temperature_2m;
     const precipitation_now = weather.current.precipitation;
+    const precipitation_units = weather.current_units.precipitation;
     const wind_now = weather.current.wind_speed_10m;
+    const wind_units = weather.current_units.wind_speed_10m;
 
     std.debug.print("Weather: \n", .{});
     std.debug.print("\n", .{});
     std.debug.print("current: \n", .{});
-    std.debug.print("temperature: {d:.1} \n", .{temperature_now});
-    std.debug.print("precipitation: {d:.1} \n", .{precipitation_now});
-    std.debug.print("wind: {d:.1} \n", .{wind_now});
+    std.debug.print("temperature: {d:.1} {s} \n", .{ temperature_now, temperature_units });
+    std.debug.print("precipitation: {d:.1} {s} \n", .{ precipitation_now, precipitation_units });
+    std.debug.print("wind: {d:.1} {s} \n", .{ wind_now, wind_units });
 }

@@ -12,6 +12,11 @@ pub const data = struct {
         precipitation: f64,
         wind_speed_10m: f64,
     },
+    current_units: struct {
+        temperature_2m: []u8,
+        wind_speed_10m: []u8,
+        precipitation: []u8,
+    },
 };
 
 pub fn rawToJSON(allocator: std.mem.Allocator, raw_data: []const u8) !std.json.Parsed(data) {
