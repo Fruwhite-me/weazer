@@ -25,14 +25,18 @@ pub const stockConfig =
 pub const rawConfig = struct {
     source: []const u8,
 };
-
+/// Read raw slice and transform to json
 pub fn rawToJSON(comptime T: type, allocator: std.mem.Allocator, raw: []const u8) !std.json.Parsed(T) {
     const parsed = try std.json.parseFromSlice(T, allocator, raw, .{ .ignore_unknown_fields = true });
     return parsed;
 }
-
+/// TODO: add dynamically resolve $HOME(ssry for hardcode)
+///
+/// Check existence of dir and file, if doesn't exist - create with stockConfig
 pub fn configuration(allocator: std.mem.Allocator) !std.json.Parsed(rawConfig) {
-    const path = ("/home/paulos/.config/weazer");
+    const home = try std.process.getEnvVarOwned(allocator, "HOME");
+    const path = try std.fs.path.join(allocator, &[_][]const u8{ home, ".config/weazer" });
+
     std.fs.makeDirAbsolute(path) catch |err| switch (err) {
         error.PathAlreadyExists => {},
         else => return err,
@@ -51,7 +55,6 @@ pub fn configuration(allocator: std.mem.Allocator) !std.json.Parsed(rawConfig) {
     };
     defer file.close();
     const config = try std.fs.File.readToEndAlloc(file, allocator, 1024 * 1024);
-    //defer allocator.free(config);
     const coordinates = try rawToJSON(rawConfig, allocator, config);
     return coordinates;
 }

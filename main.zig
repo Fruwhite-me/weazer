@@ -1,14 +1,20 @@
 const std = @import("std");
 const io = std.io;
 const request = @import("request.zig");
-const parce = @import("json_parce.zig");
+const parce = @import("json_parse.zig");
 
 pub fn main() !void {
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    const allocator = gpa.allocator();
+    // Here allocator
+    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
+    defer arena.deinit();
+    const allocator = arena.allocator();
+
+    // Here app take url and fetch data from server
     const urlJson = try parce.configuration(allocator);
     const url = urlJson.value.source;
     const raw_data = try request.getRequest(allocator, url);
+
+    //here defined variables
     const json = try parce.rawToJSON(parce.data, allocator, raw_data);
     const weather = json.value;
     const stdout = std.io.getStdOut().writer();
@@ -19,8 +25,7 @@ pub fn main() !void {
     const wind_now = weather.current.wind_speed_10m;
     const wind_units = weather.current_units.wind_speed_10m;
 
-    _ = try parce.configuration(allocator);
-
+    // Finally output
     try stdout.print("Weather: \n", .{});
     try stdout.print("\n", .{});
     try stdout.print("current: \n", .{});
