@@ -1,4 +1,5 @@
 const std = @import("std");
+const main = @import("main.zig");
 
 pub const data = struct {
     daily: struct {
@@ -18,8 +19,39 @@ pub const data = struct {
         precipitation: []u8,
     },
 };
+pub const stockConfig =
+    \\ {"source":"https://api.open-meteo.com/v1/forecast?latitude=64.1355&longitude=-21.8954&daily=temperature_2m_max,temperature_2m_min,wind_speed_10m_max,precipitation_probability_max&current=temperature_2m,precipitation,wind_speed_10m&timezone=auto"}
+;
+pub const rawConfig = struct {
+    source: []const u8,
+};
 
-pub fn rawToJSON(allocator: std.mem.Allocator, raw_data: []const u8) !std.json.Parsed(data) {
-    const parsed = try std.json.parseFromSlice(data, allocator, raw_data, .{ .ignore_unknown_fields = true });
+pub fn rawToJSON(comptime T: type, allocator: std.mem.Allocator, raw: []const u8) !std.json.Parsed(T) {
+    const parsed = try std.json.parseFromSlice(T, allocator, raw, .{ .ignore_unknown_fields = true });
     return parsed;
+}
+
+pub fn configuration(allocator: std.mem.Allocator) !std.json.Parsed(rawConfig) {
+    const path = ("/home/paulos/.config/weazer");
+    std.fs.makeDirAbsolute(path) catch |err| switch (err) {
+        error.PathAlreadyExists => {},
+        else => return err,
+    };
+    var dir = try std.fs.openDirAbsolute(path, .{});
+    defer dir.close();
+    const file = dir.openFile("config.json", .{}) catch |err| switch (err) {
+        error.FileNotFound => blk: {
+            std.debug.print("config created, or something broken\n", .{});
+            const newFile = try dir.createFile("config.json", .{ .read = true });
+            try newFile.writeAll(stockConfig);
+            try newFile.seekTo(0);
+            break :blk newFile;
+        },
+        else => return err,
+    };
+    defer file.close();
+    const config = try std.fs.File.readToEndAlloc(file, allocator, 1024 * 1024);
+    //defer allocator.free(config);
+    const coordinates = try rawToJSON(rawConfig, allocator, config);
+    return coordinates;
 }
