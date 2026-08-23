@@ -1,5 +1,4 @@
 const std = @import("std");
-const main = @import("main.zig");
 
 /// Data we take from Openmeteo(or you can input in source other source, but doesn't tested)
 pub const data = struct {
@@ -45,22 +44,17 @@ pub fn configuration(allocator: std.mem.Allocator) !std.json.Parsed(rawConfig) {
         path = try std.fs.path.join(allocator, &[_][]const u8{ home, ".config/weazer" });
     }
 
-    //{
-    //    var home = try std.process.getEnvVarOwned(allocator, "HOME");
-    //    const path = try std.fs.path.join(allocator, &[_][]const u8{ home, ".config/weazer" });
-    //} else {
-    //   const path = home;
-    //}
-
     std.fs.makeDirAbsolute(path) catch |err| switch (err) {
         error.PathAlreadyExists => {},
         else => return err,
     };
+
     var dir = try std.fs.openDirAbsolute(path, .{});
     defer dir.close();
+
     const file = dir.openFile("config.json", .{}) catch |err| switch (err) {
         error.FileNotFound => blk: {
-            std.debug.print("config created, or something broken\n", .{});
+            std.debug.print("config created, change acording to README\n", .{});
             const newFile = try dir.createFile("config.json", .{ .read = true });
             try newFile.writeAll(stockConfig);
             try newFile.seekTo(0);
@@ -69,7 +63,8 @@ pub fn configuration(allocator: std.mem.Allocator) !std.json.Parsed(rawConfig) {
         else => return err,
     };
     defer file.close();
+
     const config = try std.fs.File.readToEndAlloc(file, allocator, 1024 * 1024);
-    const coordinates = try rawToJSON(rawConfig, allocator, config);
-    return coordinates;
+    const configurationData = try rawToJSON(rawConfig, allocator, config);
+    return configurationData;
 }

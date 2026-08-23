@@ -1,21 +1,26 @@
 const std = @import("std");
-const io = std.io;
 const request = @import("request.zig");
-const parce = @import("json_parse.zig");
+const parse = @import("json_parse.zig");
 
 pub fn main() !void {
-    // Here allocator
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
     defer arena.deinit();
     const allocator = arena.allocator();
 
-    // Here app take url and fetch data from server
-    const urlJson = try parce.configuration(allocator);
+    const urlJson = try parse.configuration(allocator);
     const url = urlJson.value.source;
-    const raw_data = try request.getRequest(allocator, url);
+    const raw_data = request.getRequest(allocator, url) catch |err| switch (err) {
+        error.NetworkError => {
+            std.debug.print("some error with OpenMeteo \n", .{});
+            std.process.exit(1);
+        },
+        else => {
+            std.debug.print("no internet \n", .{});
+            std.process.exit(1);
+        },
+    };
 
-    //here defined variables
-    const json = try parce.rawToJSON(parce.data, allocator, raw_data);
+    const json = try parse.rawToJSON(parse.data, allocator, raw_data);
     const weather = json.value;
     const stdout = std.io.getStdOut().writer();
     const temperature_now = weather.current.temperature_2m;
@@ -25,7 +30,6 @@ pub fn main() !void {
     const wind_now = weather.current.wind_speed_10m;
     const wind_units = weather.current_units.wind_speed_10m;
 
-    // Finally output
     try stdout.print("Weather: \n", .{});
     try stdout.print("\n", .{});
     try stdout.print("current: \n", .{});
