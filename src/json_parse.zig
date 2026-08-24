@@ -1,6 +1,6 @@
 const std = @import("std");
 
-/// Data we take from Openmeteo(or you can input in source other source, but doesn't tested)
+/// Data we take from Openmeteo(or you can input in "source" other source, but doesn't tested)
 pub const data = struct {
     daily: struct {
         temperature_2m_max: ?[]f64,
@@ -32,39 +32,4 @@ pub const rawConfig = struct {
 pub fn rawToJSON(comptime T: type, allocator: std.mem.Allocator, raw: []const u8) !std.json.Parsed(T) {
     const parsed = try std.json.parseFromSlice(T, allocator, raw, .{ .ignore_unknown_fields = true });
     return parsed;
-}
-
-/// Check existence of dir and file of configuration, if doesn't exist - create with stockConfig
-pub fn configuration(allocator: std.mem.Allocator) !std.json.Parsed(rawConfig) {
-    var path: []u8 = undefined;
-    if (std.process.getEnvVarOwned(allocator, "XDG_CONFIG_HOME")) |xdgDir| {
-        path = try std.fs.path.join(allocator, &[_][]const u8{ xdgDir, "weazer" });
-    } else |_| {
-        const home = try std.process.getEnvVarOwned(allocator, "HOME");
-        path = try std.fs.path.join(allocator, &[_][]const u8{ home, ".config/weazer" });
-    }
-
-    std.fs.makeDirAbsolute(path) catch |err| switch (err) {
-        error.PathAlreadyExists => {},
-        else => return err,
-    };
-
-    var dir = try std.fs.openDirAbsolute(path, .{});
-    defer dir.close();
-
-    const file = dir.openFile("config.json", .{}) catch |err| switch (err) {
-        error.FileNotFound => blk: {
-            std.debug.print("config created, change acсording to README\n \n", .{});
-            const newFile = try dir.createFile("config.json", .{ .read = true });
-            try newFile.writeAll(stockConfig);
-            try newFile.seekTo(0);
-            break :blk newFile;
-        },
-        else => return err,
-    };
-    defer file.close();
-
-    const config = try std.fs.File.readToEndAlloc(file, allocator, 1024 * 1024);
-    const configurationData = try rawToJSON(rawConfig, allocator, config);
-    return configurationData;
 }
