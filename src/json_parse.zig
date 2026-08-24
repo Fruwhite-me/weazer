@@ -34,7 +34,7 @@ pub fn rawToJSON(comptime T: type, allocator: std.mem.Allocator, raw: []const u8
     return parsed;
 }
 
-/// Check existence of dir and file, if doesn't exist - create with stockConfig
+/// Check existence of dir and file of configuration, if doesn't exist - create with stockConfig
 pub fn configuration(allocator: std.mem.Allocator) !std.json.Parsed(rawConfig) {
     var path: []u8 = undefined;
     if (std.process.getEnvVarOwned(allocator, "XDG_CONFIG_HOME")) |xdgDir| {
@@ -54,7 +54,7 @@ pub fn configuration(allocator: std.mem.Allocator) !std.json.Parsed(rawConfig) {
 
     const file = dir.openFile("config.json", .{}) catch |err| switch (err) {
         error.FileNotFound => blk: {
-            std.debug.print("config created, change acording to README\n", .{});
+            std.debug.print("config created, change acсording to README\n \n", .{});
             const newFile = try dir.createFile("config.json", .{ .read = true });
             try newFile.writeAll(stockConfig);
             try newFile.seekTo(0);

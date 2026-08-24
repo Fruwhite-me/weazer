@@ -9,16 +9,7 @@ pub fn main() !void {
 
     const urlJson = try parse.configuration(allocator);
     const url = urlJson.value.source;
-    const raw_data = request.getRequest(allocator, url) catch |err| switch (err) {
-        error.NetworkError => {
-            std.debug.print("some error with OpenMeteo \n", .{});
-            std.process.exit(1);
-        },
-        else => {
-            std.debug.print("no internet \n", .{});
-            std.process.exit(1);
-        },
-    };
+    const raw_data = try request.getRequest(allocator, url);
 
     const json = try parse.rawToJSON(parse.data, allocator, raw_data);
     const weather = json.value;
