@@ -2,12 +2,12 @@ const std = @import("std");
 
 /// Data we take from Openmeteo(or you can input in "source" other source, but doesn't tested)
 pub const data = struct {
-    daily: struct {
+    daily: ?struct {
         temperature_2m_max: ?[]f64,
         temperature_2m_min: ?[]f64,
         wind_speed_10m_max: ?[]f64,
         precipitation_probability_max: ?[]f64,
-    },
+    } = null,
     current: struct {
         temperature_2m: f64,
         precipitation: f64,

@@ -11,14 +11,14 @@ pub fn configuration(allocator: std.mem.Allocator) !std.json.Parsed(parse.rawCon
         const home = std.process.getEnvVarOwned(allocator, "HOME") catch |err| switch (err) {
             error.EnvironmentVariableNotFound => return error.NoHome,
             error.OutOfMemory => return error.OutOfMemory,
-            error.InvalidWtf8 => return error.Imposible,
+            error.InvalidWtf8 => return error.Impossible,
         };
         path = try std.fs.path.join(allocator, &[_][]const u8{ home, ".config/weazer" });
     }
 
     std.fs.makeDirAbsolute(path) catch |err| switch (err) {
         error.PathAlreadyExists => {},
-        else => return error.Imposible,
+        else => return error.Impossible,
     };
 
     var dir = try std.fs.openDirAbsolute(path, .{});
@@ -42,7 +42,10 @@ pub fn configuration(allocator: std.mem.Allocator) !std.json.Parsed(parse.rawCon
     const configurationData = parse.rawToJSON(parse.rawConfig, allocator, config) catch |err| switch (err) {
         error.SyntaxError, error.UnexpectedToken, error.UnexpectedEndOfInput, error.InvalidCharacter => return error.SyntaxMalformed,
         error.MissingField => return error.SyntaxMissing, //here I change name from missing field, because, maybe in furure will be other reqaried fields
-        else => return error.Imposible,
+        else => return error.Impossible,
     };
     return configurationData;
+}
+pub fn url(allocator: std.mem.Allocator, lat: []u8, lon: []u8) ![]const u8 {
+    return try std.fmt.allocPrint(allocator, "https://api.open-meteo.com/v1/forecast?latitude={s}&longitude={s}&current=temperature_2m,wind_speed_10m,precipitation", .{ lat, lon });
 }
