@@ -9,7 +9,9 @@ pub fn parseArg(allocator: std.mem.Allocator) !CliArg {
     _ = flags.skip();
     var res = CliArg{};
     while (flags.next()) |args| {
-        if (std.mem.eql(u8, args, "--lat")) {
+        if ((std.mem.eql(u8, args, "-h")) or (std.mem.eql(u8, args, "--help"))) {
+            return error.Help;
+        } else if (std.mem.eql(u8, args, "--lat")) {
             const val = flags.next() orelse return error.InputNothing;
             if (std.mem.startsWith(u8, val, "--")) return error.InputNothing;
             res.lat = try allocator.dupe(u8, val);
@@ -20,6 +22,9 @@ pub fn parseArg(allocator: std.mem.Allocator) !CliArg {
         } else {
             return error.UnknownKey;
         }
+    }
+    if ((res.lat == null) != (res.lon == null)) {
+        return error.OneArg;
     }
     return res;
 }

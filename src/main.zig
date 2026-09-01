@@ -10,6 +10,7 @@ pub fn main() !void {
     defer arena.deinit();
     const allocator = arena.allocator();
     const stderr = std.io.getStdErr().writer();
+    const stdout = std.io.getStdOut().writer();
 
     const flag = flags.parseArg(allocator) catch |err| switch (err) {
         error.InputNothing => {
@@ -23,6 +24,14 @@ pub fn main() !void {
         error.OutOfMemory => {
             try stderr.print("OOM \n", .{});
             std.process.exit(1);
+        },
+        error.OneArg => {
+            try stderr.print("You input only one argument, input another \n", .{});
+            std.process.exit(1);
+        },
+        error.Help => {
+            try stdout.print("help placeholder \n", .{});
+            std.process.exit(0);
         },
     };
     const confJson = config.configuration(allocator) catch |err| switch (err) {
@@ -83,7 +92,7 @@ pub fn main() !void {
             std.process.exit(1);
         },
     };
-
+    const layout = confJson.value.layout;
     const json = try parse.rawToJSON(parse.data, allocator, raw_data);
-    try out.output(json.value);
+    try out.output(json.value, layout);
 }

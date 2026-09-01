@@ -25,6 +25,7 @@ pub const stockConfig =
 ;
 pub const rawConfig = struct {
     source: []const u8,
+    layout: []const []const u8,
 };
 
 /// Read raw slice and transform to json
